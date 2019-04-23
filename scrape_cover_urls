@@ -5,12 +5,12 @@
 # available under the Apache Licence v2.0
 
 # This tool takes Punctum Books' metadata CSV file, and a TSV file from
-# Oapen; it creates a SQLite database in the same directory, mapping
+# OAPEN; it creates a SQLite database in the same directory, mapping
 # Punctum's book DOIs to the URLs for their cover images. This database
 # is consulted in preference to scraping the OAPEN website, to save wear
 # and tear on OAPEN's webserver.
 
-# The Oapen TSV file must be pre-processed if its first line (the column
+# The OAPEN TSV file must be pre-processed if its first line (the column
 # header names) is delimited with commas rather than tabs; additionally, the
 # leading spaces should be removed from the field names [sic]. It may be
 # obtained from http://oapen.org/content/metadata
@@ -54,9 +54,9 @@ def get_punctum_books(path):
     """Return a lazy list of tuples of information about Punctum's books,
        given a CSV file of their metadata, in the form:
 
-       (DOI, Oapen ID, { arbitrary stuff from CSV file }),
-       (DOI, Oapen ID, { arbitrary stuff from CSV file }),
-       (DOI, Oapen ID, { arbitrary stuff from CSV file }),
+       (DOI, OAPEN ID, { arbitrary stuff from CSV file }),
+       (DOI, OAPEN ID, { arbitrary stuff from CSV file }),
+       (DOI, OAPEN ID, { arbitrary stuff from CSV file }),
        ..."""
     puncsv = csv.DictReader(open(path))
     for row in puncsv:
@@ -97,7 +97,7 @@ def get_doi_to_cover_url_mappings(path, oapen_landing_pages):
         oapen_landing_page = oapen_landing_pages[oapen_id]
         yield doi, oapen_landing_page
 
-class OapenHTMLParser(HTMLParser):
+class OAPENHTMLParser(HTMLParser):
     """A toy HTML parser for the landing pages on OAPEN's website, e.g.,
     http://www.oapen.org/search?identifier=1004825
 
@@ -134,7 +134,7 @@ def find_cover_url(landing_page_url):
     """Given the URL of a landing page for a book, return an absolute URL
        for the book's cover image."""
     body = requests.get(landing_page_url).text
-    parser = OapenHTMLParser()
+    parser = OAPENHTMLParser()
     parser.feed(body)
     return cover_url_prefix + parser.found
 
