@@ -4,3 +4,5 @@ punctum_cover_cache.db-journal
 *.csv
 *.tsv
 *.xslx
+*.pyc
+__pycache__
