@@ -145,10 +145,10 @@ def run():
         c.close()
 
     for doi, oapen_landing_page_url in doi_to_url.items():
-        print(doi, oapen_landing_page_url)
+        print(doi, oapen_landing_page_url, file=sys.stderr)
         url = cached(doi)
         if url is not None:
-            print("CACHED: ", url)
+            print("CACHED: ", url, file=sys.stderr)
         else:
             url = find_cover_url(oapen_landing_page_url)
             save_to_cache(doi, url)
