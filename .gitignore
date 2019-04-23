@@ -1,0 +1,6 @@
+punctum_cover_cache.db
+punctum_cover_cache.db-journal
+*~
+*.csv
+*.tsv
+*.xslx
