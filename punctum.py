@@ -6,7 +6,7 @@
 import oapen
 import csv
 
-def get_punctum_books(path):
+def get_books(path):
     """Return a lazy list of tuples of information about Punctum's books,
        given a CSV file of their metadata, in the form:
 
@@ -30,5 +30,5 @@ def get_punctum_books(path):
         elif "oapen.org" not in oapen_url:
             yield None
         else:
-            oapen_id = oapen.get_oapen_id(oapen_url)
+            oapen_id = oapen.get_id(oapen_url)
             yield doi, oapen_id, row

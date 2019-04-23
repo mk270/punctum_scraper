@@ -50,7 +50,7 @@ def get_doi_to_cover_url_mappings(path, oapen_landing_pages):
     """Return a lazy list of tuples, mapping a book's DOI to its landing
        page at OAPEN."""
 
-    actual_books = (b for b in punctum.get_punctum_books(path)
+    actual_books = (b for b in punctum.get_books(path)
                     if b is not None)
     for doi, oapen_id, book_data in actual_books:
         website = book_data['Website']

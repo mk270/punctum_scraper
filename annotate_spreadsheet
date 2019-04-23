@@ -22,7 +22,7 @@ def make_mapping(path):
 
     db = database.get_cache_db_handle()
 
-    for row in punctum.get_punctum_books(path):
+    for row in punctum.get_books(path):
         if row is None:
             yield "", ""
         else:
