@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+
+# Punctum Scraper, (c) Martin Keegan, Open Book Publishers, 2019.
+# To the extent if any to which this code is subject to copyright, it is
+# available under the Apache Licence v2.0
+
+# This tool generates a column of cell values that could be cut-and-pasted
+# into the Punctum metadata spreadsheet, representing the Cover URL data
+
+import sys
+import csv
+import punctum
+import database
+
+def make_mapping(path):
+    """Generate a lazy list of tuples of the form:
+       (DOI, Cover URL)
+       These may be empty strings.
+       Head this list with appropriate header values.
+    """
+    yield "DOI", "Cover URL"
+
+    db = database.get_cache_db_handle()
+
+    for row in punctum.get_punctum_books(path):
+        if row is None:
+            yield "", ""
+        else:
+            doi, _, other_data = row
+            cover_url = database.cached(db, doi)
+            assert (cover_url is not None), doi
+            yield doi, cover_url
+
+def run():
+    try:
+        _, punctum_metadata_path = sys.argv
+    except:
+        print("Usage: annotate_spreadsheet punctum_metadata.csv",
+              file=sys.stderr)
+        exit(1)
+
+    w = csv.writer(sys.stdout)
+    for row in make_mapping(punctum_metadata_path):
+        w.writerow(row)
+    sys.stdout.flush() # superstition
+
+if __name__ == '__main__':
+    run()
