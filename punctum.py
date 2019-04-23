@@ -12,8 +12,13 @@ def get_punctum_books(path):
 
        (DOI, OAPEN ID, { arbitrary stuff from CSV file }),
        (DOI, OAPEN ID, { arbitrary stuff from CSV file }),
+       None,
        (DOI, OAPEN ID, { arbitrary stuff from CSV file }),
-       ..."""
+       ...
+
+       None is generated where the data relates to a non-book or something
+       otherwise not on OAPEN. It is the responsibility of the caller to
+       filter these out."""
     puncsv = csv.DictReader(open(path))
     for row in puncsv:
         doi = row['DOI'].strip("\n")
@@ -21,8 +26,9 @@ def get_punctum_books(path):
         oapen_url = row['OAPEN URL']
         assert doc_type in ['Book', 'Journal']
         if doc_type != 'Book':
-            continue
-        if "oapen.org" not in oapen_url:
-            continue
-        oapen_id = oapen.get_oapen_id(oapen_url)
-        yield doi, oapen_id, row
+            yield None
+        elif "oapen.org" not in oapen_url:
+            yield None
+        else:
+            oapen_id = oapen.get_oapen_id(oapen_url)
+            yield doi, oapen_id, row

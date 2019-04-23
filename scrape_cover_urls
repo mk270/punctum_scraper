@@ -18,31 +18,15 @@
 # Usage:
 #   scrape_cover_urls punctum_books_metadata.csv oapen.tsv
 
-import os
 import csv
 import sys
 import requests
-from sqlite3 import dbapi2 as sqlite
+import database
 from html.parser import HTMLParser
 
 import punctum
 
 cover_url_prefix = "https://www.oapen.org"
-
-sqlite_db_path = os.path.join(os.path.dirname(__file__),
-                              'punctum_cover_cache.db')
-
-def get_cache_db_handle():
-    """Return a database handle to the DB; create the DB and initialise
-       it with a schema if the file does not already exist."""
-    create = not os.path.exists(sqlite_db_path)
-    db = sqlite.connect(sqlite_db_path)
-    if create:
-        c = db.cursor()
-        c.execute('''create table cover (doi text unique not null,
-                                         cover_url text not null);''')
-        db.commit()
-    return db
 
 def get_oapen_mappings(path):
     """Return a lazy list of tuples of information from OAPEN's TSV file.
@@ -65,7 +49,10 @@ def get_oapen_mappings(path):
 def get_doi_to_cover_url_mappings(path, oapen_landing_pages):
     """Return a lazy list of tuples, mapping a book's DOI to its landing
        page at OAPEN."""
-    for doi, oapen_id, book_data in punctum.get_punctum_books(path):
+
+    actual_books = (b for b in punctum.get_punctum_books(path)
+                    if b is not None)
+    for doi, oapen_id, book_data in actual_books:
         website = book_data['Website']
         oapen_landing_page = oapen_landing_pages[oapen_id]
         yield doi, oapen_landing_page
@@ -125,33 +112,16 @@ def run():
     doi_to_url = dict([ (k,v) for k, v in 
                         get_doi_to_cover_url_mappings(publisher_csv,
                                                       oapen_landing_pages) ])
-    db = get_cache_db_handle()
-
-    def cached(doi):
-        c = db.cursor()
-        args = (doi, )
-        c.execute('''select cover_url from cover where doi = ?;''', args)
-        res = c.fetchone()
-        c.close()
-        if res is None:
-            return None
-        return res[0]
-
-    def save_to_cache(doi, url):
-        c = db.cursor()
-        args = (doi, url)
-        c.execute('''insert into cover (doi, cover_url) values (?, ?);''', args)
-        db.commit()
-        c.close()
+    db = database.get_cache_db_handle()
 
     for doi, oapen_landing_page_url in doi_to_url.items():
         print(doi, oapen_landing_page_url, file=sys.stderr)
-        url = cached(doi)
+        url = database.cached(db, doi)
         if url is not None:
             print("CACHED: ", url, file=sys.stderr)
         else:
             url = find_cover_url(oapen_landing_page_url)
-            save_to_cache(doi, url)
+            database.save_to_cache(db, doi, url)
 
 if __name__ == '__main__':
     run()
