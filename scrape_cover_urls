@@ -21,10 +21,11 @@
 import os
 import csv
 import sys
-import urllib.parse as urlparse
 import requests
 from sqlite3 import dbapi2 as sqlite
 from html.parser import HTMLParser
+
+import punctum
 
 cover_url_prefix = "https://www.oapen.org"
 
@@ -42,34 +43,6 @@ def get_cache_db_handle():
                                          cover_url text not null);''')
         db.commit()
     return db
-
-def get_oapen_id(url):
-    """Given a URL for a book on OAPEN, extract its OAPEN resource id."""
-    assert "oapen.org" in url
-    assert "http" in url
-    parsed = urlparse.urlparse(url)
-    return urlparse.parse_qs(parsed.query)['docid'][0]
-
-def get_punctum_books(path):
-    """Return a lazy list of tuples of information about Punctum's books,
-       given a CSV file of their metadata, in the form:
-
-       (DOI, OAPEN ID, { arbitrary stuff from CSV file }),
-       (DOI, OAPEN ID, { arbitrary stuff from CSV file }),
-       (DOI, OAPEN ID, { arbitrary stuff from CSV file }),
-       ..."""
-    puncsv = csv.DictReader(open(path))
-    for row in puncsv:
-        doi = row['DOI'].strip("\n")
-        doc_type = row['Type of Document']
-        oapen_url = row['OAPEN URL']
-        assert doc_type in ['Book', 'Journal']
-        if doc_type != 'Book':
-            continue
-        if "oapen.org" not in oapen_url:
-            continue
-        oapen_id = get_oapen_id(oapen_url)
-        yield doi, oapen_id, row
 
 def get_oapen_mappings(path):
     """Return a lazy list of tuples of information from OAPEN's TSV file.
@@ -92,7 +65,7 @@ def get_oapen_mappings(path):
 def get_doi_to_cover_url_mappings(path, oapen_landing_pages):
     """Return a lazy list of tuples, mapping a book's DOI to its landing
        page at OAPEN."""
-    for doi, oapen_id, book_data in get_punctum_books(path):
+    for doi, oapen_id, book_data in punctum.get_punctum_books(path):
         website = book_data['Website']
         oapen_landing_page = oapen_landing_pages[oapen_id]
         yield doi, oapen_landing_page
